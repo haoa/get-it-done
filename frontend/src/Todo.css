@@ -9,3 +9,19 @@
     opacity: 0.6;
     cursor: move;
 }
+
+.due-display {
+    width: 180px;
+    text-align: left;
+    padding: 4px 10px;
+    background-color: #8bcdff;
+    border: 1px solid #68b2ff;
+    border-radius: 3px;
+    color: black;
+    cursor: pointer;
+}
+
+.over-due {
+    color: rgb(170, 66, 42);
+    font-weight: bold;
+}

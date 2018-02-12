@@ -23,10 +23,16 @@ import SevenDaysView from './SevenDaysView';
 const { Content, Header, Sider } = Layout
 const MenuItemGroup = Menu.ItemGroup;
 
-const archiveMode = "Archiv"
-const nextSevendaysMode = "nextSevenDays"
+const archiveMode = "Erledigt"
+const nextSevendaysMode = "Nächste 7 Tage"
 
 moment.locale('de')
+
+const get_done_todos = (todos) => (todos.filter(
+  (todo) => todo.done))
+
+const get_todos_for_project = (todos, project) => (todos.filter(
+  (todo) => todo.project && todo.project.name === project))
 
 class App extends Component {
   state = {
@@ -73,15 +79,13 @@ class App extends Component {
       filteredTodos = _.cloneDeep(todos).filter(
         (todo) => todo.due)
     } else {
-      filteredTodos = _.cloneDeep(todos).filter(
-        (todo) => todo.project && todo.project.name === taskListFilter)
+      filteredTodos = get_todos_for_project(_.cloneDeep(todos), taskListFilter)
     }
     this.setState({todos: filteredTodos})
   }
 
   onMenuItemClick(event) {
     let todos = this.props.TodosQuery.allTodos
-    console.log(event.key)
     if(event.key === "allTasks") {
       this.setState({
         taskListFilter: null,
@@ -192,7 +196,7 @@ class App extends Component {
                 >
                   <ProjectListItem project={project} />
                   <Icon style={{ display: "inline-block", backgroundColor: projectColor.backgroundColor[project.id], borderRadius: 10, width: 18, height: 18, marginRight: 6 }}></Icon>
-                  <span style={{top: -5, position: "relative"}}>{project.name}</span>
+                  <span style={{top: -5, position: "relative"}}>{project.name} ({get_todos_for_project(this.props.TodosQuery.allTodos, project.name).length})</span>
                 </Menu.Item>
               )
             })}
@@ -223,25 +227,31 @@ class App extends Component {
               className="sidebar-menu-item-project"
             >
               <Icon type="book" />
-              Archiv
+              Erledigt ({get_done_todos(this.props.TodosQuery.allTodos).length})
             </Menu.Item>
           </Menu>
         </Sider>
         <Layout>
           <Header className="App-header">
             <h1 className="App-title">{this.state.taskListFilter || "Alle Aufgaben"}</h1>
-            {this.state.taskListFilter && (<Button type="dashed" className="remove-project-button">Löschen</Button>)}
+            {this.state.taskListFilter && this.state.taskListFilter !== nextSevendaysMode && (<Button type="dashed" className="remove-project-button">Löschen</Button>)}
           </Header>
           <Content>
             <div className="App-intro">
             {this.state.taskListFilter === nextSevendaysMode
               ? (<SevenDaysView todos={this.state.todos} projects={this.state.projects} />)
               : (<List
+              pagination={{
+                  pageSize: 10,
+                  current: 1,
+                  total: this.state.todos.length,
+                  onChange: (() => {}),
+                }}
               size="large"
               bordered
               footer={this.state.taskListFilter !== archiveMode
                 ? <Affix offsetBottom={0}><NewTask projectId={
-                this.state.taskListFilter && this.state.taskListFilter !== "Archiv"
+                this.state.taskListFilter && this.state.taskListFilter !== archiveMode
                 ? _.find(this.props.ProjectsQuery.allProjects, (project) => project.name === this.state.taskListFilter).id
                 : null
               }/></Affix>

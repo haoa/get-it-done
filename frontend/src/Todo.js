@@ -1,10 +1,11 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types';
 import './Todo.css'
-import { Checkbox, DatePicker, 
+import {
+    Checkbox, DatePicker,
     List, Tag, AutoComplete, Input,
     Dropdown, Button, Menu, Icon
- } from 'antd';
+} from 'antd';
 import { UPDATE_TASK_MUTATION, REMOVE_TASK_MUTATION, ASSIGN_TASK_TO_PROJECT_MUTATION } from './mutations'
 import { TODOS_QUERY, PROJECTS_QUERY } from './queries'
 import { graphql, compose } from 'react-apollo'
@@ -40,6 +41,7 @@ class Todo extends Component {
             due: todo.due ? moment(todo.due) : null,
             editingProject: false,
             editingName: false,
+            editingDue: false,
             project: todo.project ? todo.project : noProject,
             projects: _.concat([noProject], props.projects.map(project => project.name))
         }
@@ -64,12 +66,13 @@ class Todo extends Component {
         this.props.UpdateTaskMutation({
             variables: {
                 id: this.props.todo.id.toString(),
-                due: this.state.due 
+                due: this.state.due
                     ? this.state.due.toString()
                     : null
             },
             refetchQueries: [{ query: TODOS_QUERY }]
         })
+        this.setState({ editingDue: !this.state.editingDue })
     }
 
     onCheckedUpdate(event) {
@@ -85,23 +88,23 @@ class Todo extends Component {
     }
 
     onEditNameClick(event) {
-        this.setState({editingName: !this.state.editingName})
+        this.setState({ editingName: !this.state.editingName })
     }
 
-    updateTodo() {
+    /* updateTodo() {
         this.props.UpdateTaskMutation({
             variables: {
                 id: this.props.todo.id.toString(),
                 name: this.state.name,
                 done: this.state.done,
-                due: this.state.due 
+                due: this.state.due
                     ? this.state.due.toString()
                     : null
             },
             refetchQueries: [{ query: TODOS_QUERY }]
         })
-    }
-    
+    } */
+
     removeTask() {
         this.props.RemoveTaskMutation({
             variables: {
@@ -115,11 +118,30 @@ class Todo extends Component {
         this.setState({ editingProject: !this.state.editingProject })
     }
 
+    onEditingDue() {
+        this.setState({ editingDue: !this.state.editingDue })
+    }
+
+    onEditingName(event) {
+        this.setState({ name: event.target.value })
+    }
+
+    onEditingNameEnd() {
+        this.props.UpdateTaskMutation({
+            variables: {
+                id: this.props.todo.id.toString(),
+                name: this.state.name
+            },
+            refetchQueries: [{ query: TODOS_QUERY }]
+        })
+        this.setState({ editingName: false })
+    }
+
     updateProject(newProject) {
         let index = _.findIndex(this.props.projects, (project => project.name === newProject))
-        let project = index > -1 
-        ? this.props.projects[index]
-        : null
+        let project = index > -1
+            ? this.props.projects[index]
+            : null
         this.setState({
             project: project || noProject,
             editingProject: !this.state.editingProject
@@ -174,52 +196,67 @@ class Todo extends Component {
                 actions={[
                     !this.state.editingProject
                         ? <Tag
-                            style={{color: projectColor.textColor[this.state.project.id] || "black"}}
+                            style={{ color: projectColor.textColor[this.state.project.id] || "black" }}
                             color={projectColor.backgroundColor[this.state.project.id] || "blue"}
                             onClick={this.onEditingProject.bind(this)}
                         >{this.state.project.name || noProject}
-                        <Icon type="edit" style={{marginLeft: 3}} />
+                            <Icon type="edit" style={{ marginLeft: 3 }} />
                         </Tag>
                         : <AutoComplete
-                        placeholder={this.state.project.name || noProject}
-                        dataSource={this.state.projects}
-                        onSelect={this.updateProject.bind(this)}
-                    />,
-                    <DatePicker
-                        format="DD.MM.YYYY HH:MM"
-                        showTime
-                        locale="de_DE"
-                        placeholder="Erledigen bis"
-                        value={this.state.due}
-                        onOk={this.onDueOk.bind(this)}
-                        onChange={this.onDueUpdate.bind(this)}
-                    />,
+                            placeholder={this.state.project.name || noProject}
+                            dataSource={this.state.projects}
+                            onSelect={this.updateProject.bind(this)}
+                        />,
+                    !this.state.due || this.state.editingDue
+                        ? (<DatePicker
+                            format="DD.MM.YYYY HH:MM"
+                            showTime
+                            locale="de_DE"
+                            placeholder="Erledigen bis?"
+                            value={this.state.due}
+                            onOk={this.onDueOk.bind(this)}
+                            onChange={this.onDueUpdate.bind(this)}
+                        />)
+                        : (<div
+                            className={'due-display' + (this.state.due.isBefore(moment()) ? ' over-due' : '')}
+                            onClick={this.onEditingDue.bind(this)}
+                        >
+                            {_.upperFirst(this.state.due.fromNow())}
+                            <Icon type="edit" style={{ float: 'right', marginTop: 3 }} />
+                        </div>),
                     <a onClick={this.removeTask.bind(this)}>Löschen</a>]}>
-                    {connectDragSource(<div className="drag-area">
-                    </div>)}
+                {connectDragSource(<div className="drag-area">
+                </div>)}
                 {!this.state.editingName
-                ? [<Checkbox
-                    key={this.props.id + '_check-box'}
-                    defaultChecked={this.state.done}
-                    checked={this.state.done}
-                    onChange={this.onCheckedUpdate.bind(this)}>
-                    {this.state.name}
-                </Checkbox>,
-                <Button 
-                    key={this.props.id + '_button'}
-                    style={{
-                        padding: '5px 5px 4px 4px', 
-                        height: 24, 
-                        backgroundColor: '#1890ff', 
-                        color: 'white'}}
-                    onClick={this.onEditNameClick.bind(this)}
+                    ? [<Checkbox
+                        key={this.props.id + '_check-box'}
+                        defaultChecked={this.state.done}
+                        checked={this.state.done}
+                        onChange={this.onCheckedUpdate.bind(this)}>
+                        {this.state.name}
+                    </Checkbox>,
+                    <Button
+                        key={this.props.id + '_button'}
+                        style={{
+                            padding: '5px 5px 4px 4px',
+                            height: 24,
+                            backgroundColor: '#1890ff',
+                            color: 'white'
+                        }}
+                        onClick={this.onEditNameClick.bind(this)}
                     >
                         <Icon type="edit" style={{
-                            position: "relative", 
+                            position: "relative",
                             top: -5,
-                            }}/>
+                        }} />
                     </Button>]
-                :<Input value={this.state.name} />
+                    : <Input
+                        value={this.state.name}
+                        autoFocus
+                        onChange={this.onEditingName.bind(this)}
+                        onBlur={this.onEditingNameEnd.bind(this)}
+                        onPressEnter={this.onEditingNameEnd.bind(this)}
+                    />
                 }
             </List.Item>
         </div>)
