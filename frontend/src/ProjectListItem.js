@@ -31,24 +31,27 @@ const dropTarget = DropTarget("TodoListItem", todoTarget, collect)(
       let { isOver, connectDropTarget, project } = props
       return connectDropTarget(
         !isOver
-        ? <div style={{
-          opacity: 0,
-          position: "absolute",
-          width: 200,
-          height: 40,
-          left: 0,
-          zIndex: 1000
-        }}
+        ? <div
+          style={{
+            opacity: 0,
+            position: "absolute",
+            width: 200,
+            height: 40,
+            left: 0,
+            zIndex: 1000
+          }}
         key={project.name + "dropArea"}>
         </div>
-        : <div style={{
-          backgroundColor: "tomato", 
-          opacity: 0.2,
-          position: "absolute",
-          width: 200,
-          height: 40,
-          left: 0,
-          zIndex: 1000}}></div>
+        : <div 
+          style={{
+            backgroundColor: "tomato", 
+            opacity: 0.2,
+            position: "absolute",
+            width: 200,
+            height: 40,
+            left: 0,
+            zIndex: 1000}}
+            ></div>
         )}
 )
 

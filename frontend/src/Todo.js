@@ -224,7 +224,7 @@ class Todo extends Component {
                             {_.upperFirst(this.state.due.fromNow())}
                             <Icon type="edit" style={{ float: 'right', marginTop: 3 }} />
                         </div>),
-                    <a onClick={this.removeTask.bind(this)}>Löschen</a>]}>
+                    <a onClick={this.removeTask.bind(this)} title='Aufgabe löschen'><Icon type="delete" /></a>]}>
                 {connectDragSource(<div className="drag-area">
                 </div>)}
                 {!this.state.editingName
@@ -233,15 +233,18 @@ class Todo extends Component {
                         defaultChecked={this.state.done}
                         checked={this.state.done}
                         onChange={this.onCheckedUpdate.bind(this)}>
-                        {this.state.name}
                     </Checkbox>,
+                    <div 
+                        onClick={this.onEditNameClick.bind(this)}
+                        style={{margin: '0 10px'}}
+                        >{this.state.name}</div>,
                     <Button
                         key={this.props.id + '_button'}
                         style={{
                             padding: '5px 5px 4px 4px',
-                            height: 24,
+                            height: 24,/* 
                             backgroundColor: '#1890ff',
-                            color: 'white'
+                            color: 'white' */
                         }}
                         onClick={this.onEditNameClick.bind(this)}
                     >
@@ -256,6 +259,7 @@ class Todo extends Component {
                         onChange={this.onEditingName.bind(this)}
                         onBlur={this.onEditingNameEnd.bind(this)}
                         onPressEnter={this.onEditingNameEnd.bind(this)}
+                        onKeyUp={(event) => {event.keyCode === 27 && this.onEditingNameEnd()}}
                     />
                 }
             </List.Item>

@@ -32,7 +32,7 @@ class NewTask extends Component {
 
     render() {
         return (
-            <div style={{backgroundColor:"#f0f2f5", padding:"14px"}}>
+            <div className='create-new-task'>
                 <Search
                     size="large"
                     onPressEnter={this.onKeyUp.bind(this)}

@@ -14,8 +14,8 @@ import Todo from './Todo'
 import NewTask from './NewTask'
 import { TODOS_QUERY, PROJECTS_QUERY } from './queries'
 import { NEW_TASK_MUTATION, UPDATE_TASK_MUTATION, NEW_PROJECT_MUTATION } from './mutations'
-import { List, DatePicker, Layout, 
-  Menu, Icon, Input, Button, Spin, Affix } from 'antd'
+import { List, DatePicker, Layout,
+  Menu, SubMenu, Icon, Input, Button, Spin, Affix } from 'antd'
 import { newMap } from 'yaml-ast-parser';
 import ProjectListItem from './ProjectListItem';
 import SevenDaysView from './SevenDaysView';
@@ -41,7 +41,9 @@ class App extends Component {
     siderCollapsed: false,
     taskListFilter: null,
     newProjectVisible: false,
-    currentProjectName: ""
+    currentProjectName: "",
+    currentPage: 1,
+    pageSize: 10
   }
 
   newProjectInput = null
@@ -52,7 +54,7 @@ class App extends Component {
       this.state.taskListFilter
       ? this.filterTodos(this.state.taskListFilter, nextProps.TodosQuery.allTodos)
       : this.setState({
-        todos: _.cloneDeep(nextProps.TodosQuery.allTodos).filter((todo) => !todo.done)
+        todos: _.cloneDeep(nextProps.TodosQuery.allTodos).filter((todo) => !todo.done),
       })
     }
     if(nextProps.ProjectsQuery.allProjects) {
@@ -142,6 +144,10 @@ class App extends Component {
     this.setState({currentProjectName: event.target.value})
   }
 
+  onPageChange(page, pageSize) {
+    this.setState({currentPage: page})
+  }
+
   render() {
     if (this.props.TodosQuery.loading || this.props.ProjectsQuery.loading) {
       return (<div style={{position: "absolute", width: 160, height: 60, top: 0, bottom: 0, left: 0, right: 0, margin: "auto"}}>
@@ -166,6 +172,7 @@ class App extends Component {
                 : (<div className="logo-collapsed"></div>)
             }
           </div>
+          <Affix>
           <Menu
             /* theme="dark" */
             defaultSelectedKeys={['1']}
@@ -174,33 +181,20 @@ class App extends Component {
           >
             <Menu.Item 
               key="allTasks" 
-              className="sidebar-menu-item-project"
+              className="sidebar-menu-item"
               style={{margin: 0, lineHeight: "35px"}}>
               <Icon type="bars" />
               <span>Alle Aufgaben</span>
             </Menu.Item>
             <Menu.Item 
               key={nextSevendaysMode} 
-              className="sidebar-menu-item-project"
+              className="sidebar-menu-item"
               style={{margin: 0, lineHeight: "35px"}}>
               <Icon type="calendar" />
               <span>Nächste 7 Tage</span>
             </Menu.Item>
-            <MenuItemGroup key="g1" title="Projekte" className="submenu-title">
-            {this.props.ProjectsQuery.allProjects.map((project, index) => {
-              return (
-                <Menu.Item 
-                key={project.name}
-                className="sidebar-menu-item-project"
-                onClick={() => this.onMenuItemClick(project.name)}
-                >
-                  <ProjectListItem project={project} />
-                  <Icon style={{ display: "inline-block", backgroundColor: projectColor.backgroundColor[project.id], borderRadius: 10, width: 18, height: 18, marginRight: 6 }}></Icon>
-                  <span style={{top: -5, position: "relative"}}>{project.name} ({get_todos_for_project(this.props.TodosQuery.allTodos, project.name).length})</span>
-                </Menu.Item>
-              )
-            })}
-            <Menu.Item key="newProject">
+            <Menu.SubMenu key="g1" title="Projekte" className="submenu-title">
+            <Menu.Item key="newProject" className='new-project'>
               {this.state.newProjectVisible
               ? <Input 
                   value={this.state.currentProjectName}
@@ -210,7 +204,7 @@ class App extends Component {
                   onKeyUp={this.onKeyUpNewProject.bind(this)}
                   onChange={this.onNewProjectChange.bind(this)}
                   />
-              : (<Button type="primary">
+              : (<Button >
                   <Icon type="plus-circle" 
                     style={{    fontSize: "14pt",
                       margin: 0,
@@ -221,20 +215,36 @@ class App extends Component {
                   </Button>)
               }
               </Menu.Item>
-            </MenuItemGroup>
+            {this.props.ProjectsQuery.allProjects.map((project, index) => {
+              return (
+                <Menu.Item 
+                key={project.name}
+                className="sidebar-menu-item project-item"
+                >
+                  <ProjectListItem project={project} />
+                  <Icon style={{ display: "inline-block", backgroundColor: projectColor.backgroundColor[project.id], borderRadius: 10, width: 18, height: 18, marginRight: 6 }}></Icon>
+                  <span style={{top: -5, position: "relative"}}>{project.name} ({get_todos_for_project(this.props.TodosQuery.allTodos, project.name).length})</span>
+                </Menu.Item>
+              )
+            })}
+            </Menu.SubMenu>
             <Menu.Item
               key={archiveMode}
-              className="sidebar-menu-item-project"
+              className="sidebar-menu-item"
             >
               <Icon type="book" />
-              Erledigt ({get_done_todos(this.props.TodosQuery.allTodos).length})
+              {archiveMode} ({get_done_todos(this.props.TodosQuery.allTodos).length})
             </Menu.Item>
           </Menu>
+          </Affix>
         </Sider>
         <Layout>
-          <Header className="App-header">
+          <Header className="App-header" style={{backgroundColor: projectColor.backgroundColor[this.state.currentProjectName]}}>
             <h1 className="App-title">{this.state.taskListFilter || "Alle Aufgaben"}</h1>
-            {this.state.taskListFilter && this.state.taskListFilter !== nextSevendaysMode && (<Button type="dashed" className="remove-project-button">Löschen</Button>)}
+            {this.state.taskListFilter 
+              && (this.state.taskListFilter !== nextSevendaysMode) 
+              && (this.state.taskListFilter !== archiveMode) 
+              && (<Button type="dashed" className="remove-project-button">Löschen</Button>)}
           </Header>
           <Content>
             <div className="App-intro">
@@ -242,13 +252,14 @@ class App extends Component {
               ? (<SevenDaysView todos={this.state.todos} projects={this.state.projects} />)
               : (<List
               pagination={{
-                  pageSize: 10,
-                  current: 1,
+                  pageSize: this.state.pageSize,
+                  current: this.state.currentPage,
                   total: this.state.todos.length,
-                  onChange: (() => {}),
+                  onChange: this.onPageChange.bind(this),
                 }}
               size="large"
               bordered
+              /* header={<div>Filter: <button>Sortieren</button><Input placeholder='Suchen' /></div>} */
               footer={this.state.taskListFilter !== archiveMode
                 ? <Affix offsetBottom={0}><NewTask projectId={
                 this.state.taskListFilter && this.state.taskListFilter !== archiveMode
@@ -256,7 +267,8 @@ class App extends Component {
                 : null
               }/></Affix>
             : null}
-              dataSource={this.state.todos}
+              dataSource={_.sortBy(this.state.todos, (todo) => todo.name.toLowerCase())
+                .slice((this.state.currentPage - 1) * this.state.pageSize, this.state.currentPage * this.state.pageSize)}
               renderItem={todo =>
                 (<Todo todo={todo} projects={this.state.projects} />
                 )}

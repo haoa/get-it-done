@@ -8,14 +8,16 @@
     border-radius: 0 5px 5px 0;
     opacity: 0.6;
     cursor: move;
+    box-shadow: 2px 0 2px #0000004a;
+    border-right: 1px solid #456eb9;
 }
 
 .due-display {
-    width: 180px;
+    width: 170px;
     text-align: left;
     padding: 4px 10px;
-    background-color: #8bcdff;
-    border: 1px solid #68b2ff;
+    /* background-color: #8bcdff;
+    border: 1px solid #68b2ff; */
     border-radius: 3px;
     color: black;
     cursor: pointer;
@@ -24,4 +26,12 @@
 .over-due {
     color: rgb(170, 66, 42);
     font-weight: bold;
+}
+
+.ant-list-item-action li {
+    margin-left: 20px;
+}
+
+.ant-list-item-action-split {
+    display: none;
 }
