@@ -16,8 +16,8 @@
     width: 170px;
     text-align: left;
     padding: 4px 10px;
-    /* background-color: #8bcdff;
-    border: 1px solid #68b2ff; */
+    background-color: #ffffff99;
+    border: 1px solid #ffffff99;
     border-radius: 3px;
     color: black;
     cursor: pointer;
@@ -25,7 +25,21 @@
 
 .over-due {
     color: rgb(170, 66, 42);
-    font-weight: bold;
+}
+
+.todo-name-text {
+    cursor: pointer;
+}
+
+.todo-name-edit-icon {
+    position: relative;
+    top: -5;
+    margin-left: 6px;
+    visibility: hidden;
+}
+
+.todo-name-text:hover .todo-name-edit-icon {
+    visibility: visible;
 }
 
 .ant-list-item-action li {

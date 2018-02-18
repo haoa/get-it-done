@@ -222,7 +222,7 @@ class Todo extends Component {
                             onClick={this.onEditingDue.bind(this)}
                         >
                             {_.upperFirst(this.state.due.fromNow())}
-                            <Icon type="edit" style={{ float: 'right', marginTop: 3 }} />
+                            <Icon type="edit" style={{ float: 'right', marginTop: 3, color: 'lightgrey' }} />
                         </div>),
                     <a onClick={this.removeTask.bind(this)} title='Aufgabe löschen'><Icon type="delete" /></a>]}>
                 {connectDragSource(<div className="drag-area">
@@ -230,36 +230,32 @@ class Todo extends Component {
                 {!this.state.editingName
                     ? [<Checkbox
                         key={this.props.id + '_check-box'}
+                        className='todo-checkbox'
                         defaultChecked={this.state.done}
                         checked={this.state.done}
                         onChange={this.onCheckedUpdate.bind(this)}>
                     </Checkbox>,
-                    <div 
+                    <div
                         onClick={this.onEditNameClick.bind(this)}
-                        style={{margin: '0 10px'}}
-                        >{this.state.name}</div>,
-                    <Button
-                        key={this.props.id + '_button'}
-                        style={{
-                            padding: '5px 5px 4px 4px',
-                            height: 24,/* 
-                            backgroundColor: '#1890ff',
-                            color: 'white' */
-                        }}
-                        onClick={this.onEditNameClick.bind(this)}
-                    >
-                        <Icon type="edit" style={{
-                            position: "relative",
-                            top: -5,
-                        }} />
-                    </Button>]
+                        className='todo-name-text'
+                        style={{ margin: '0 10px' }}
+                    >{this.state.name}
+                        <Icon
+                            key={this.props.id + '_editIcon'}
+                            type="edit"
+                            className='todo-name-edit-icon'
+                            onClick={this.onEditNameClick.bind(this)}
+                        />
+                    </div>,
+
+                    ]
                     : <Input
                         value={this.state.name}
                         autoFocus
                         onChange={this.onEditingName.bind(this)}
                         onBlur={this.onEditingNameEnd.bind(this)}
                         onPressEnter={this.onEditingNameEnd.bind(this)}
-                        onKeyUp={(event) => {event.keyCode === 27 && this.onEditingNameEnd()}}
+                        onKeyUp={(event) => { event.keyCode === 27 && this.onEditingNameEnd() }}
                     />
                 }
             </List.Item>

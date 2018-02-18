@@ -13,7 +13,7 @@ import projectColor from './project-colors'
 import Todo from './Todo'
 import NewTask from './NewTask'
 import { TODOS_QUERY, PROJECTS_QUERY } from './queries'
-import { NEW_TASK_MUTATION, UPDATE_TASK_MUTATION, NEW_PROJECT_MUTATION } from './mutations'
+import { NEW_TASK_MUTATION, UPDATE_TASK_MUTATION, NEW_PROJECT_MUTATION, REMOVE_PROJECT_MUTATION } from './mutations'
 import { List, DatePicker, Layout,
   Menu, SubMenu, Icon, Input, Button, Spin, Affix } from 'antd'
 import { newMap } from 'yaml-ast-parser';
@@ -43,7 +43,8 @@ class App extends Component {
     newProjectVisible: false,
     currentProjectName: "",
     currentPage: 1,
-    pageSize: 10
+    pageSize: 15,
+    tryRemovingProject: false
   }
 
   newProjectInput = null
@@ -111,7 +112,7 @@ class App extends Component {
 
   onPressEnterNewProject(event){
     let projectName = event.target.value
-    if(projectName && projectName !== "Archiv"){
+    if(projectName && projectName !== archiveMode && projectName !== nextSevendaysMode){
       this.props.NewProjectMutation({
         variables: {
           name: projectName,
@@ -133,11 +134,15 @@ class App extends Component {
 
   onKeyUpNewProject(event){
     if(event.nativeEvent.keyCode == 27){
-      this.setState({
-        newProjectVisible: !this.state.newProjectVisible,
-        currentProjectName: ""
-      })
+      this.endNewProject()
     }
+  }
+
+  endNewProject(){
+    this.setState({
+      newProjectVisible: !this.state.newProjectVisible,
+      currentProjectName: ""
+    })
   }
 
   onNewProjectChange(event) {
@@ -146,6 +151,23 @@ class App extends Component {
 
   onPageChange(page, pageSize) {
     this.setState({currentPage: page})
+  }
+
+  onTryRemoveProject(){
+    this.setState({tryRemovingProject: !this.state.tryRemovingProject})
+  }
+
+  onRemoveProject() {
+    //TODO: tasklistfilter is a bad way or name as there is currentprojectname in state!
+    let project = _.find(this.props.ProjectsQuery.allProjects, (project) => project.name === this.state.taskListFilter)
+    this.props.RemoveProjectMutation({
+      variables: {
+        id: project.id,
+    },
+    refetchQueries: [{ query: PROJECTS_QUERY }, { query: TODOS_QUERY }]
+    })
+    this.setState({taskListFilter: null})
+    //this.onTryRemoveProject()
   }
 
   render() {
@@ -175,7 +197,8 @@ class App extends Component {
           <Affix>
           <Menu
             /* theme="dark" */
-            defaultSelectedKeys={['1']}
+            defaultSelectedKeys={['allTasks']}
+            defaultOpenKeys={['g1']}
             mode="inline"
             onClick={this.onMenuItemClick.bind(this)}
           >
@@ -202,6 +225,7 @@ class App extends Component {
                   placeholder="Projektname"
                   onPressEnter={this.onPressEnterNewProject.bind(this)}
                   onKeyUp={this.onKeyUpNewProject.bind(this)}
+                  onBlur={this.endNewProject.bind(this)}
                   onChange={this.onNewProjectChange.bind(this)}
                   />
               : (<Button >
@@ -244,7 +268,25 @@ class App extends Component {
             {this.state.taskListFilter 
               && (this.state.taskListFilter !== nextSevendaysMode) 
               && (this.state.taskListFilter !== archiveMode) 
-              && (<Button type="dashed" className="remove-project-button">Löschen</Button>)}
+              && (this.state.tryRemovingProject 
+              ?(<div>
+                <Button 
+                type="dashed" 
+                className="remove-project-button ok-remove"
+                onClick={this.onRemoveProject.bind(this)}
+                >Ok</Button>
+                <Button 
+                type="dashed" 
+                className="remove-project-button"
+                onClick={this.onTryRemoveProject.bind(this)}
+                >Abbrechen</Button>
+              </div>)
+              :(<Button 
+                type="dashed" 
+                className="remove-project-button"
+                onClick={this.onTryRemoveProject.bind(this)}
+                >Löschen</Button>)
+                )}
           </Header>
           <Content>
             <div className="App-intro">
@@ -288,4 +330,5 @@ export default compose(
   graphql(TODOS_QUERY, { name: 'TodosQuery' }),
   graphql(PROJECTS_QUERY, { name: 'ProjectsQuery' }),
   graphql(NEW_PROJECT_MUTATION, { name: 'NewProjectMutation' }),
+  graphql(REMOVE_PROJECT_MUTATION, { name: 'RemoveProjectMutation' }),
 )(AppContainer)

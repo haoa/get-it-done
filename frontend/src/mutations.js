@@ -41,10 +41,17 @@ mutation addProject($name: String!) {
 }
 `
 
+const REMOVE_PROJECT_MUTATION = gql`
+mutation removeProject($id:String!) {
+  removeProject(id: $id)
+}
+`
+
 export { 
   NEW_TASK_MUTATION, 
   UPDATE_TASK_MUTATION,
   REMOVE_TASK_MUTATION,
   ASSIGN_TASK_TO_PROJECT_MUTATION,
-  NEW_PROJECT_MUTATION
+  NEW_PROJECT_MUTATION,
+  REMOVE_PROJECT_MUTATION
  }

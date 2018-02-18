@@ -18,6 +18,7 @@ const typeDefs = `
     updateTodo(id: String!, name: String, done: Boolean, due: String, projectId: String): Todo
     removeTodo(id: String!): Boolean
     addProject(name: String!): Project
+    removeProject(id: String!): Boolean
     assignTodoToProject(todoId: String!, projectId: String): Boolean
   }
 
@@ -102,6 +103,13 @@ const resolvers = {
         name: args.name
       }
       return Project.create(newProject)
+    },
+    removeProject: (root, args) => {
+      return Project.findById(parseInt(args.id))
+        .then(project => project.destroy()
+          .then(removedProject => {
+            return removedProject !== null
+          }))
     },
     assignTodoToProject: (root, args) => {
       Todo.findById(parseInt(args.todoId))

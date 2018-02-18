@@ -18,6 +18,11 @@ li {
     color: white !important;
 }
 
+.remove-project-button.ok-remove {
+    background-color: #cd2424bf !important;
+    margin-left: 10px;
+}
+
 .App-header {
     background-color: #0e4369 !important;
 }
